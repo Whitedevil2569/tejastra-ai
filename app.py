@@ -14,7 +14,6 @@ CORS(app)
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 client = None
-
 def initialize_client():
     global client
     try:
@@ -44,9 +43,13 @@ Q: "Explain ESC" → "An Electronic Speed Controller manages power flow between 
 @app.route("/")
 def home():
     return "AeroBot Backend is Running!"
-
 @app.route("/chat", methods=["POST", "OPTIONS"])
 def chat():
+    # --- THE FIX: Intercept the browser's invisible CORS preflight ping ---
+    if request.method == "OPTIONS":
+        return jsonify({"status": "CORS ok"}), 200
+        
+    # --- Normal Chat Logic Continues ---
     if not client:
         return jsonify({"error": "AI client not initialized"}), 503
     
@@ -86,6 +89,3 @@ def chat():
         print(f"Error: {e}")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
-if __name__ == "__main__":
-    app.run(debug=True, port=5000)
